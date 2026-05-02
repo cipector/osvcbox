@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>osvcbox</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f6f8fa;
+            --surface: #ffffff;
+            --surface-muted: #f0f3f6;
+            --text: #1f2933;
+            --muted: #57606a;
+            --border: #d8dee4;
+            --input-border: #d0d7de;
+            --link: #0969da;
+            --button: #1f883d;
+            --button-text: #ffffff;
+            --danger: #cf222e;
+        }
+        html[data-theme="dark"] {
+            color-scheme: dark;
+            --bg: #0d1117;
+            --surface: #161b22;
+            --surface-muted: #21262d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --border: #30363d;
+            --input-border: #3b434d;
+            --link: #58a6ff;
+            --button: #238636;
+            --button-text: #ffffff;
+            --danger: #ff7b72;
+        }
+        body { font-family: system-ui, sans-serif; margin: 0; color: var(--text); background: var(--bg); }
+        header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; gap: 24px; align-items: center; }
+        main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        nav { display: flex; gap: 12px; flex-wrap: wrap; }
+        nav a, .button { color: var(--link); text-decoration: none; font-weight: 600; }
+        .topline { margin-left: auto; display: flex; gap: 12px; align-items: center; color: var(--muted); }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .metric { font-size: 28px; font-weight: 700; margin-top: 8px; }
+        table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
+        th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        th { background: var(--surface-muted); }
+        form { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; max-width: 620px; }
+        .filter-form { max-width: none; display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 16px; }
+        .filter-form p { margin: 0; min-width: 140px; }
+        form p { display: grid; gap: 6px; }
+        input, select, textarea { font: inherit; color: var(--text); background: var(--surface); padding: 8px; border: 1px solid var(--input-border); border-radius: 6px; }
+        input[type="date"], input[type="time"] { color-scheme: light; }
+        html[data-theme="dark"] input[type="date"], html[data-theme="dark"] input[type="time"] { color-scheme: dark; }
+        button { font: inherit; background: var(--button); color: var(--button-text); border: 0; border-radius: 6px; padding: 10px 14px; cursor: pointer; }
+        .theme-toggle { background: var(--surface-muted); color: var(--text); border: 1px solid var(--border); width: 42px; height: 42px; padding: 0; font-size: 20px; line-height: 1; }
+        .actions { margin: 16px 0; }
+        .muted { color: var(--muted); }
+        .errorlist { color: var(--danger); }
+        .holiday-list { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin: 16px 0; }
+        .holiday-list ul { margin: 8px 0 0; padding-left: 20px; }
+        .work-entry-layout { display: grid; grid-template-columns: minmax(280px, 620px) minmax(280px, 1fr); gap: 20px; align-items: start; }
+        .mini-calendar { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+        .calendar-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .calendar-header h2 { margin: 0; }
+        .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-muted); color: var(--text); font-size: 24px; line-height: 1; }
+        .row-actions { display: flex; gap: 6px; align-items: center; }
+        .row-actions form { padding: 0; border: 0; background: transparent; max-width: none; }
+        .danger-button { background: var(--danger); color: #ffffff; }
+        .mini-calendar table { table-layout: fixed; border: 0; }
+        .mini-calendar th, .mini-calendar td { padding: 4px; text-align: center; border: 0; }
+        .calendar-day { width: 100%; min-height: 34px; background: var(--surface-muted); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 0; }
+        .calendar-day.weekend { background: #fff1f2; color: #9f1239; }
+        .calendar-day.holiday { background: #fef3c7; color: #92400e; border-color: #f59e0b; }
+        .calendar-day.selected { outline: 2px solid var(--link); outline-offset: 1px; }
+        .calendar-day.today { font-weight: 700; }
+        html[data-theme="dark"] .calendar-day.weekend { background: #3f1620; color: #fda4af; }
+        html[data-theme="dark"] .calendar-day.holiday { background: #3a2a0a; color: #facc15; border-color: #a16207; }
+        @media (max-width: 800px) {
+            .work-entry-layout { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <strong>osvcbox</strong>
+        {% if user.is_authenticated %}
+            <nav>
+                <a href="{% url 'dashboard' %}">Přehled</a>
+                <a href="{% url 'client_list' %}">Klienti</a>
+                <a href="{% url 'project_list' %}">Projekty</a>
+                <a href="{% url 'work_entry_create' %}">Zapsat hodiny</a>
+                <a href="{% url 'work_entry_report' %}">Rozpis</a>
+                <a href="{% url 'regular_payment_list' %}">Platby</a>
+                <a href="{% url 'workspace_settings' %}">Pracovní prostor</a>
+            </nav>
+            <div class="topline">
+                <span>{{ user.username }}</span>
+                <button class="theme-toggle" type="button" data-theme-toggle title="Přepnout světlý/tmavý režim" aria-label="Přepnout světlý/tmavý režim">◐</button>
+                <form action="{% url 'logout' %}" method="post" style="padding: 0; border: 0; background: transparent;">
+                    {% csrf_token %}
+                    <button type="submit">Odhlásit</button>
+                </form>
+            </div>
+        {% endif %}
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+        (function () {
+            var storageKey = "osvcbox-theme";
+            var root = document.documentElement;
+            var saved = localStorage.getItem(storageKey);
+            if (saved === "dark" || saved === "light") {
+                root.dataset.theme = saved;
+            }
+            document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    var next = root.dataset.theme === "dark" ? "light" : "dark";
+                    root.dataset.theme = next;
+                    localStorage.setItem(storageKey, next);
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

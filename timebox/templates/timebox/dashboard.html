@@ -1,0 +1,81 @@
+{% extends "timebox/base.html" %}
+
+{% block content %}
+<h1>Přehled {{ dashboard.month_label }}</h1>
+<p class="muted">{{ workspace.name }} · pracovních dnů po odečtení českých svátků: {{ dashboard.working_days }}</p>
+
+<form class="filter-form" method="get">
+    <p>
+        <label for="period">Období</label>
+        <select id="period" name="period">
+            <option value="month" {% if period == "month" %}selected{% endif %}>Měsíc</option>
+            <option value="year" {% if period == "year" %}selected{% endif %}>Rok</option>
+        </select>
+    </p>
+    <p>
+        <label for="month">Měsíc</label>
+        <input id="month" name="month" type="number" min="1" max="12" value="{{ month }}">
+    </p>
+    <p>
+        <label for="year">Rok</label>
+        <input id="year" name="year" type="number" min="2000" max="2100" value="{{ year }}">
+    </p>
+    <button type="submit">Zobrazit</button>
+</form>
+
+<section class="grid">
+    <div class="card"><div>Pracovní fond</div><div class="metric">{{ dashboard.work_fund_hours }} h</div></div>
+    <div class="card"><div>Odpracováno celkem</div><div class="metric">{{ dashboard.worked_hours }} h</div></div>
+    <div class="card"><div>Fakturovatelné</div><div class="metric">{{ dashboard.billable_hours }} h</div></div>
+    <div class="card"><div>Nefakturovatelné</div><div class="metric">{{ dashboard.non_billable_hours }} h</div></div>
+    <div class="card"><div>Saldo hodin</div><div class="metric">{{ dashboard.balance_hours }} h</div></div>
+    <div class="card"><div>K fakturaci celkem</div><div class="metric">{{ dashboard.invoice_amount_czk }} Kč</div></div>
+    <div class="card"><div>Pravidelné platby</div><div class="metric">{{ dashboard.regular_expenses_czk }} Kč</div></div>
+    <div class="card"><div>Čistá částka</div><div class="metric">{{ dashboard.net_invoice_amount_czk }} Kč</div></div>
+</section>
+
+<section class="holiday-list">
+    <strong>Svátky ve vybraném období: {{ dashboard.holiday_count }}</strong>
+    <p class="muted">Fond snižuje {{ dashboard.fund_holiday_count }} svátků, které vycházejí na pracovní den.</p>
+    {% if dashboard.holidays %}
+        <ul>
+            {% for holiday, name in dashboard.holidays %}
+                <li>{{ holiday|date:"j. n. Y" }} – {{ name }}</li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="muted">V tomto období nejsou žádné české státní svátky.</p>
+    {% endif %}
+</section>
+
+<h2>Rozpad k fakturaci</h2>
+{% if dashboard.clients %}
+    <table>
+        <thead>
+            <tr>
+                <th>Zákazník / projekt</th>
+                <th>Fakturovatelné hodiny</th>
+                <th>Částka</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for client in dashboard.clients %}
+                <tr>
+                    <th>{{ client.client_name }}</th>
+                    <th>{{ client.billable_hours }} h</th>
+                    <th>{{ client.amount_czk }} Kč</th>
+                </tr>
+                {% for project in client.projects %}
+                    <tr>
+                        <td>{{ project.project_name }}</td>
+                        <td>{{ project.billable_hours }} h</td>
+                        <td>{{ project.amount_czk }} Kč</td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="muted">Zatím nejsou žádné fakturovatelné záznamy pro vybrané období.</p>
+{% endif %}
+{% endblock %}

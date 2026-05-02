@@ -1,0 +1,23 @@
+{% extends "timebox/base.html" %}
+
+{% block content %}
+<h1>Projekty</h1>
+<p class="actions"><a class="button" href="{% url 'project_create' %}">Nový projekt</a></p>
+{% if projects %}
+    <table>
+        <thead><tr><th>Klient</th><th>Projekt</th><th>Sazba</th><th>Aktivní</th></tr></thead>
+        <tbody>
+            {% for project in projects %}
+                <tr>
+                    <td>{{ project.client.name }}</td>
+                    <td>{{ project.name }}</td>
+                    <td>{{ project.hourly_rate_czk|default:"-" }}</td>
+                    <td>{{ project.is_active|yesno:"ano,ne" }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p class="muted">Zatím nemáte žádné projekty.</p>
+{% endif %}
+{% endblock %}

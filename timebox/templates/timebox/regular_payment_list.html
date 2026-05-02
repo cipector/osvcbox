@@ -1,0 +1,27 @@
+{% extends "timebox/base.html" %}
+
+{% block content %}
+<h1>Pravidelné platby</h1>
+<p class="muted">{{ workspace.name }}</p>
+<p class="actions"><a class="button" href="{% url 'regular_payment_create' %}">Nová platba</a></p>
+
+{% if payments %}
+    <section class="grid">
+        {% for item in payments %}
+            <article class="card">
+                <h2>{{ item.payment.name }}</h2>
+                <p><strong>{{ item.payment.amount_czk }} Kč</strong></p>
+                <p>Účet: {% if item.payment.account_prefix %}{{ item.payment.account_prefix }}-{% endif %}{{ item.payment.account_number }}/{{ item.payment.bank_code }}</p>
+                {% if item.payment.variable_symbol %}<p>VS: {{ item.payment.variable_symbol }}</p>{% endif %}
+                {% if item.payment.message %}<p>Zpráva: {{ item.payment.message }}</p>{% endif %}
+                <p>Připomenout: {{ item.payment.reminder_day }}. den v měsíci</p>
+                <p>Stav: {{ item.payment.is_active|yesno:"aktivní,neaktivní" }}</p>
+                <img src="{{ item.qr_data_uri }}" alt="QR kód pro platbu {{ item.payment.name }}" style="width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 6px;">
+                <p class="actions"><a class="button" href="{% url 'regular_payment_update' item.payment.id %}">Upravit</a></p>
+            </article>
+        {% endfor %}
+    </section>
+{% else %}
+    <p class="muted">Zatím nemáte žádné pravidelné platby.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends "timebox/base.html" %}
+
+{% block content %}
+<h1>{{ title }}</h1>
+<div class="work-entry-layout">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Uložit</button>
+    </form>
+
+    <section class="mini-calendar" aria-label="Kalendář pro výběr dne">
+        <div class="calendar-header">
+            <a class="button icon-button" href="?calendar_year={{ calendar.previous.year }}&calendar_month={{ calendar.previous.month }}" title="Předchozí měsíc" aria-label="Předchozí měsíc">‹</a>
+            <h2>{{ calendar.label }}</h2>
+            <a class="button icon-button" href="?calendar_year={{ calendar.next.year }}&calendar_month={{ calendar.next.month }}" title="Další měsíc" aria-label="Další měsíc">›</a>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Po</th>
+                    <th>Út</th>
+                    <th>St</th>
+                    <th>Čt</th>
+                    <th>Pa</th>
+                    <th>So</th>
+                    <th>Ne</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in calendar.weeks %}
+                    <tr>
+                        {% for day in week %}
+                            <td>
+                                {% if day.in_month %}
+                                    <button
+                                        class="calendar-day{% if day.is_weekend %} weekend{% endif %}{% if day.is_holiday %} holiday{% endif %}{% if day.is_selected %} selected{% endif %}{% if day.is_today %} today{% endif %}"
+                                        type="button"
+                                        data-calendar-date="{{ day.date }}"
+                                        {% if day.holiday_name %}title="{{ day.holiday_name }}"{% endif %}
+                                    >{{ day.day }}</button>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="muted">Růžová = víkend, žlutá = svátek. Kliknutím vybereš datum.</p>
+    </section>
+</div>
+
+<script>
+    (function () {
+        var dateInput = document.querySelector('input[name="date"]');
+        document.querySelectorAll("[data-calendar-date]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                if (dateInput) {
+                    dateInput.value = button.dataset.calendarDate;
+                }
+                document.querySelectorAll("[data-calendar-date]").forEach(function (day) {
+                    day.classList.remove("selected");
+                });
+                button.classList.add("selected");
+            });
+        });
+    })();
+</script>
+{% endblock %}
