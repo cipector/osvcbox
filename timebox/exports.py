@@ -4,15 +4,30 @@ from zipfile import ZIP_DEFLATED, ZipFile
 from django.utils.html import escape
 
 
-def build_work_entries_xlsx(rows):
+EXPORT_TRANSLATIONS = {
+    "cs": {
+        "sheet_name": "Rozpis hodin",
+        "header": ["Datum", "Začátek", "Konec", "Součet hodin", "Poznámka"],
+        "total_label": "Součet celkem",
+    },
+    "en": {
+        "sheet_name": "Work schedule",
+        "header": ["Date", "Start", "End", "Total hours", "Note"],
+        "total_label": "Total",
+    },
+}
+
+
+def build_work_entries_xlsx(rows, language="cs"):
     output = BytesIO()
+    translations = EXPORT_TRANSLATIONS.get(language, EXPORT_TRANSLATIONS["cs"])
     with ZipFile(output, "w", ZIP_DEFLATED) as archive:
         archive.writestr("[Content_Types].xml", _content_types_xml())
         archive.writestr("_rels/.rels", _root_relationships_xml())
-        archive.writestr("xl/workbook.xml", _workbook_xml())
+        archive.writestr("xl/workbook.xml", _workbook_xml(translations["sheet_name"]))
         archive.writestr("xl/_rels/workbook.xml.rels", _workbook_relationships_xml())
         archive.writestr("xl/styles.xml", _styles_xml())
-        archive.writestr("xl/worksheets/sheet1.xml", _worksheet_xml(rows))
+        archive.writestr("xl/worksheets/sheet1.xml", _worksheet_xml(rows, translations))
     return output.getvalue()
 
 
@@ -34,11 +49,11 @@ def _root_relationships_xml():
 </Relationships>"""
 
 
-def _workbook_xml():
-    return """<?xml version="1.0" encoding="UTF-8"?>
+def _workbook_xml(sheet_name):
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
 <workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
   <sheets>
-    <sheet name="Rozpis hodin" sheetId="1" r:id="rId1"/>
+    <sheet name="{escape(sheet_name)}" sheetId="1" r:id="rId1"/>
   </sheets>
 </workbook>"""
 
@@ -62,15 +77,8 @@ def _styles_xml():
 </styleSheet>"""
 
 
-def _worksheet_xml(rows):
-    header = [
-        "Datum",
-        "Začátek",
-        "Konec",
-        "Součet hodin",
-        "Poznámka",
-    ]
-    sheet_rows = [_row_xml(1, header, style=1)]
+def _worksheet_xml(rows, translations):
+    sheet_rows = [_row_xml(1, translations["header"], style=1)]
     row_index = 2
     total_hours = None
     for row in rows:
@@ -89,7 +97,7 @@ def _worksheet_xml(rows):
         )
         row_index += 1
     if total_hours is not None:
-        sheet_rows.append(_total_row(row_index, total_hours))
+        sheet_rows.append(_total_row(row_index, total_hours, translations["total_label"]))
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <cols>
@@ -103,8 +111,8 @@ def _worksheet_xml(rows):
 </worksheet>"""
 
 
-def _total_row(row_index, total_hours):
-    return _row_xml(row_index, ["", "", "", total_hours, "Součet celkem"], style=1)
+def _total_row(row_index, total_hours, total_label):
+    return _row_xml(row_index, ["", "", "", total_hours, total_label], style=1)
 
 
 def _row_xml(row_index, values, style=None):

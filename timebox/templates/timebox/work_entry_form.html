@@ -5,15 +5,18 @@
 <div class="work-entry-layout">
     <form method="post">
         {% csrf_token %}
+        {% if next_url %}
+            <input type="hidden" name="next" value="{{ next_url }}">
+        {% endif %}
         {{ form.as_p }}
         <button type="submit">Uložit</button>
     </form>
 
     <section class="mini-calendar" aria-label="Kalendář pro výběr dne">
         <div class="calendar-header">
-            <a class="button icon-button" href="?calendar_year={{ calendar.previous.year }}&calendar_month={{ calendar.previous.month }}" title="Předchozí měsíc" aria-label="Předchozí měsíc">‹</a>
+            <a class="button icon-button" href="?calendar_year={{ calendar.previous.year }}&calendar_month={{ calendar.previous.month }}{% if next_url %}&next={{ next_url|urlencode }}{% endif %}" title="Předchozí měsíc" aria-label="Předchozí měsíc">‹</a>
             <h2>{{ calendar.label }}</h2>
-            <a class="button icon-button" href="?calendar_year={{ calendar.next.year }}&calendar_month={{ calendar.next.month }}" title="Další měsíc" aria-label="Další měsíc">›</a>
+            <a class="button icon-button" href="?calendar_year={{ calendar.next.year }}&calendar_month={{ calendar.next.month }}{% if next_url %}&next={{ next_url|urlencode }}{% endif %}" title="Další měsíc" aria-label="Další měsíc">›</a>
         </div>
         <table>
             <thead>

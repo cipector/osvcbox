@@ -29,9 +29,9 @@
     <div class="card"><div>Fakturovatelné</div><div class="metric">{{ dashboard.billable_hours }} h</div></div>
     <div class="card"><div>Nefakturovatelné</div><div class="metric">{{ dashboard.non_billable_hours }} h</div></div>
     <div class="card"><div>Saldo hodin</div><div class="metric">{{ dashboard.balance_hours }} h</div></div>
-    <div class="card"><div>K fakturaci celkem</div><div class="metric">{{ dashboard.invoice_amount_czk }} Kč</div></div>
-    <div class="card"><div>Pravidelné platby</div><div class="metric">{{ dashboard.regular_expenses_czk }} Kč</div></div>
-    <div class="card"><div>Čistá částka</div><div class="metric">{{ dashboard.net_invoice_amount_czk }} Kč</div></div>
+    <div class="card"><div>K fakturaci celkem</div><div class="metric">{{ dashboard.invoice_amount_czk|floatformat:2 }}&nbsp;Kč</div></div>
+    <div class="card"><div>Pravidelné platby</div><div class="metric">{{ dashboard.regular_expenses_czk|floatformat:2 }}&nbsp;Kč</div></div>
+    <div class="card"><div>Čistá částka</div><div class="metric">{{ dashboard.net_invoice_amount_czk|floatformat:2 }}&nbsp;Kč</div></div>
 </section>
 
 <section class="holiday-list">
@@ -50,31 +50,33 @@
 
 <h2>Rozpad k fakturaci</h2>
 {% if dashboard.clients %}
-    <table>
-        <thead>
-            <tr>
-                <th>Zákazník / projekt</th>
-                <th>Fakturovatelné hodiny</th>
-                <th>Částka</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for client in dashboard.clients %}
+    <div class="table-wrap">
+        <table>
+            <thead>
                 <tr>
-                    <th>{{ client.client_name }}</th>
-                    <th>{{ client.billable_hours }} h</th>
-                    <th>{{ client.amount_czk }} Kč</th>
+                    <th>Zákazník / projekt</th>
+                    <th>Fakturovatelné hodiny</th>
+                    <th>Částka</th>
                 </tr>
-                {% for project in client.projects %}
+            </thead>
+            <tbody>
+                {% for client in dashboard.clients %}
                     <tr>
-                        <td>{{ project.project_name }}</td>
-                        <td>{{ project.billable_hours }} h</td>
-                        <td>{{ project.amount_czk }} Kč</td>
+                        <th>{{ client.client_name }}</th>
+                        <th>{{ client.billable_hours }} h</th>
+                        <th>{{ client.amount_czk|floatformat:2 }} Kč</th>
                     </tr>
+                    {% for project in client.projects %}
+                        <tr>
+                            <td>{{ project.project_name }}</td>
+                            <td>{{ project.billable_hours }} h</td>
+                            <td>{{ project.amount_czk|floatformat:2 }} Kč</td>
+                        </tr>
+                    {% endfor %}
                 {% endfor %}
-            {% endfor %}
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    </div>
 {% else %}
     <p class="muted">Zatím nejsou žádné fakturovatelné záznamy pro vybrané období.</p>
 {% endif %}

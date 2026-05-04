@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.text import slugify
 
 from .forms import ClientForm, ProjectForm, RegularPaymentForm, WorkEntryForm, WorkspaceSettingsForm
@@ -191,11 +192,12 @@ def work_entry_create(request):
 def work_entry_update(request, pk):
     workspace = get_current_workspace(request.user)
     entry = get_object_or_404(WorkEntry, pk=pk, workspace=workspace, user=request.user)
+    next_url = _next_url_from_request(request)
     if request.method == "POST":
         form = WorkEntryForm(request.POST, workspace=workspace, instance=entry)
         if form.is_valid():
             form.save()
-            return redirect("work_entry_report")
+            return _redirect_to_next_or_report(next_url, entry.date.year, entry.date.month)
         calendar_date = _parse_date(request.POST.get("date"), entry.date)
     else:
         form = WorkEntryForm(workspace=workspace, instance=entry)
@@ -203,7 +205,12 @@ def work_entry_update(request, pk):
     return render(
         request,
         "timebox/work_entry_form.html",
-        {"title": "Upravit hodiny", "form": form, "calendar": _work_entry_calendar(calendar_date)},
+        {
+            "title": "Upravit hodiny",
+            "form": form,
+            "calendar": _work_entry_calendar(calendar_date),
+            "next_url": next_url,
+        },
     )
 
 
@@ -211,11 +218,12 @@ def work_entry_update(request, pk):
 def work_entry_delete(request, pk):
     workspace = get_current_workspace(request.user)
     entry = get_object_or_404(WorkEntry, pk=pk, workspace=workspace, user=request.user)
+    next_url = _next_url_from_request(request)
     if request.method == "POST":
         year = entry.date.year
         month = entry.date.month
         entry.delete()
-        return redirect(f"{reverse('work_entry_report')}?year={year}&month={month}")
+        return _redirect_to_next_or_report(next_url, year, month)
     return redirect("work_entry_report")
 
 
@@ -242,8 +250,9 @@ def work_entry_report(request):
     )
 
     if request.GET.get("export") == "xlsx":
+        export_language = request.GET.get("export_lang", "cs")
         response = HttpResponse(
-            build_work_entries_xlsx(entries),
+            build_work_entries_xlsx(entries, language=export_language),
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = f'attachment; filename="{_work_entry_export_filename(workspace, selected_client_id, selected_project_id, year, month)}"'
@@ -251,6 +260,8 @@ def work_entry_report(request):
 
     export_query = request.GET.copy()
     export_query["export"] = "xlsx"
+    english_export_query = export_query.copy()
+    english_export_query["export_lang"] = "en"
     return render(
         request,
         "timebox/work_entry_report.html",
@@ -264,7 +275,9 @@ def work_entry_report(request):
             "year": year,
             "month": month,
             "totals": _work_entry_report_totals(entries),
+            "current_report_path": request.get_full_path(),
             "export_query": export_query.urlencode(),
+            "english_export_query": english_export_query.urlencode(),
         },
     )
 
@@ -320,6 +333,19 @@ def _calendar_date_from_request(request, default):
     day = default.day if year == default.year and month == default.month else 1
     _, last_day = monthrange(year, month)
     return date(year, month, min(day, last_day))
+
+
+def _next_url_from_request(request):
+    next_url = request.POST.get("next") or request.GET.get("next")
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        return next_url
+    return ""
+
+
+def _redirect_to_next_or_report(next_url, year, month):
+    if next_url:
+        return redirect(next_url)
+    return redirect(f"{reverse('work_entry_report')}?year={year}&month={month}")
 
 
 def _work_entry_calendar(selected_date):

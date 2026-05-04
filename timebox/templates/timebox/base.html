@@ -35,16 +35,45 @@
         }
         body { font-family: system-ui, sans-serif; margin: 0; color: var(--text); background: var(--bg); }
         header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; gap: 24px; align-items: center; }
-        main { max-width: 1100px; margin: 0 auto; padding: 24px; }
+        main { max-width: 1240px; margin: 0 auto; padding: 24px; }
         nav { display: flex; gap: 12px; flex-wrap: wrap; }
         nav a, .button { color: var(--link); text-decoration: none; font-weight: 600; }
         .topline { margin-left: auto; display: flex; gap: 12px; align-items: center; color: var(--muted); }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
         .metric { font-size: 28px; font-weight: 700; margin-top: 8px; }
-        table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); }
-        th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+        .column-toggles { display: flex; gap: 10px 14px; flex-wrap: wrap; align-items: center; margin: 16px 0 0; padding: 12px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+        .column-toggles strong { margin-right: 2px; font-size: 14px; }
+        .column-toggle { display: inline-flex; gap: 8px; align-items: center; white-space: nowrap; padding: 4px 8px; border-radius: 6px; background: color-mix(in srgb, var(--surface-muted) 55%, transparent); }
+        .column-toggle input { margin: 0; }
+        .table-wrap { width: 100%; overflow-x: auto; margin: 16px 0; }
+        table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); min-width: max-content; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; vertical-align: top; }
         th { background: var(--surface-muted); }
+        .report-table { --col-date: 130px; --col-client: 180px; --col-project: 220px; --col-time: 110px; --col-lunch: 90px; --col-billable: 130px; --col-hours: 100px; --col-rate: 120px; --col-amount: 130px; --col-note: 180px; --col-actions: 92px; --actions-offset: 100px; padding-right: var(--actions-offset); overflow-y: visible; }
+        .report-table col.col-date { width: var(--col-date); }
+        .report-table col.col-client { width: var(--col-client); }
+        .report-table col.col-project { width: var(--col-project); }
+        .report-table col.col-time { width: var(--col-time); }
+        .report-table col.col-lunch { width: var(--col-lunch); }
+        .report-table col.col-billable { width: var(--col-billable); }
+        .report-table col.col-hours { width: var(--col-hours); }
+        .report-table col.col-rate { width: var(--col-rate); }
+        .report-table col.col-amount { width: var(--col-amount); }
+        .report-table col.col-note { width: var(--col-note); }
+        .report-table col.col-actions { width: var(--col-actions); }
+        .report-table thead th { position: relative; }
+        .report-table .th-content { display: block; padding-right: 12px; }
+        .report-table .column-resizer { position: absolute; top: 0; right: -4px; width: 10px; height: 100%; cursor: col-resize; user-select: none; touch-action: none; z-index: 3; }
+        .report-table .column-resizer::after { content: ""; position: absolute; top: 6px; bottom: 6px; left: 4px; width: 2px; border-radius: 999px; background: transparent; }
+        .report-table thead th:hover .column-resizer::after,
+        .report-table .column-resizer.is-active::after { background: var(--link); }
+        .report-table th.note-column, .report-table td.note-column { white-space: normal; word-break: break-word; }
+        .report-table .is-hidden { display: none; }
+        .report-table th.actions-column, .report-table td.actions-column { position: sticky; right: calc(var(--actions-offset) * -1); z-index: 1; background: var(--surface-muted); border-left: 1px solid var(--border); box-shadow: -8px 0 12px rgba(0, 0, 0, 0.06); text-align: center; }
+        .report-table thead th.actions-column { z-index: 2; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+        .report-table tbody td.actions-column { border-bottom: 1px solid var(--border); }
+        .report-table tbody tr:hover td.actions-column { background: color-mix(in srgb, var(--surface-muted) 75%, var(--surface)); }
         form { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; max-width: 620px; }
         .filter-form { max-width: none; display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 16px; }
         .filter-form p { margin: 0; min-width: 140px; }
@@ -64,10 +93,10 @@
         .calendar-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
         .calendar-header h2 { margin: 0; }
         .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-muted); color: var(--text); font-size: 24px; line-height: 1; }
-        .row-actions { display: flex; gap: 6px; align-items: center; }
+        .row-actions { display: flex; gap: 8px; align-items: center; justify-content: center; min-height: 42px; }
         .row-actions form { padding: 0; border: 0; background: transparent; max-width: none; }
         .danger-button { background: var(--danger); color: #ffffff; }
-        .mini-calendar table { table-layout: fixed; border: 0; }
+        .mini-calendar table { table-layout: fixed; border: 0; min-width: 0; }
         .mini-calendar th, .mini-calendar td { padding: 4px; text-align: center; border: 0; }
         .calendar-day { width: 100%; min-height: 34px; background: var(--surface-muted); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 0; }
         .calendar-day.weekend { background: #fff1f2; color: #9f1239; }

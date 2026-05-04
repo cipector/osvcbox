@@ -61,7 +61,7 @@ class WorkEntryForm(forms.ModelForm):
             "note": "Poznámka",
         }
         widgets = {
-            "date": forms.DateInput(attrs={"type": "date"}),
+            "date": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
             "start_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
             "end_time": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
         }

@@ -387,6 +387,111 @@ class WorkEntryReportTests(TestCase):
         self.assertNotIn("Export project", worksheet)
         self.assertNotIn("Částka", worksheet)
 
+    def test_report_export_supports_english_headers(self):
+        user = User.objects.create_user(username="exporten", password="secret")
+        workspace = Workspace.objects.create(name="Export EN")
+        WorkspaceMembership.objects.create(workspace=workspace, user=user)
+        client = Client.objects.create(workspace=workspace, name="English Client")
+        project = Project.objects.create(workspace=workspace, client=client, name="English project")
+        WorkEntry.objects.create(
+            workspace=workspace,
+            user=user,
+            project=project,
+            date=date(2026, 5, 7),
+            start_time=time(9, 0),
+            end_time=time(12, 30),
+            is_billable=True,
+            note="English note",
+        )
+
+        self.client.login(username="exporten", password="secret")
+        response = self.client.get(
+            reverse("work_entry_report"),
+            {"year": "2026", "month": "5", "client": str(client.id), "export": "xlsx", "export_lang": "en"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        workbook = ZipFile(BytesIO(response.content))
+        workbook_xml = workbook.read("xl/workbook.xml").decode()
+        worksheet = workbook.read("xl/worksheets/sheet1.xml").decode()
+        self.assertIn("Work schedule", workbook_xml)
+        self.assertIn("Date", worksheet)
+        self.assertIn("Start", worksheet)
+        self.assertIn("End", worksheet)
+        self.assertIn("Total hours", worksheet)
+        self.assertIn("English note", worksheet)
+        self.assertIn("Total", worksheet)
+        self.assertNotIn("Součet celkem", worksheet)
+
+    def test_report_links_include_next_and_english_export(self):
+        user = User.objects.create_user(username="links", password="secret")
+        workspace = Workspace.objects.create(name="Links")
+        WorkspaceMembership.objects.create(workspace=workspace, user=user)
+        client = Client.objects.create(workspace=workspace, name="Selected")
+        project = Project.objects.create(workspace=workspace, client=client, name="App")
+        entry = WorkEntry.objects.create(
+            workspace=workspace,
+            user=user,
+            project=project,
+            date=date(2026, 5, 6),
+            start_time=time(9, 0),
+            end_time=time(11, 0),
+            is_billable=True,
+        )
+
+        self.client.login(username="links", password="secret")
+        response = self.client.get(
+            reverse("work_entry_report"),
+            {"year": "2026", "month": "5", "client": str(client.id)},
+        )
+
+        self.assertContains(response, "Export XLSX (EN)")
+        self.assertContains(response, 'data-column-toggle="client"', html=False)
+        self.assertContains(response, 'data-column-toggle="project"', html=False)
+        self.assertContains(response, 'data-column-toggle="note"', html=False)
+        self.assertContains(response, 'data-column-resizer="client"', html=False)
+        self.assertContains(response, 'data-column-resizer="project"', html=False)
+        self.assertContains(response, 'data-column-resizer="note"', html=False)
+        self.assertContains(response, f'data-storage-scope="{user.id}"', html=False)
+        self.assertContains(
+            response,
+            f'href="{reverse("work_entry_update", args=[entry.id])}?next=/reports/work-entries/%3Fyear%3D2026%26month%3D5%26client%3D{client.id}"',
+            html=False,
+        )
+        self.assertContains(
+            response,
+            f'<input type="hidden" name="next" value="/reports/work-entries/?year=2026&amp;month=5&amp;client={client.id}">',
+            html=False,
+        )
+
+    def test_work_entry_edit_form_keeps_date_and_next_from_report(self):
+        user = User.objects.create_user(username="editreport", password="secret")
+        workspace = Workspace.objects.create(name="Edit report")
+        WorkspaceMembership.objects.create(workspace=workspace, user=user)
+        client = Client.objects.create(workspace=workspace, name="Client")
+        project = Project.objects.create(workspace=workspace, client=client, name="Project")
+        entry = WorkEntry.objects.create(
+            workspace=workspace,
+            user=user,
+            project=project,
+            date=date(2026, 5, 8),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            is_billable=True,
+        )
+
+        self.client.login(username="editreport", password="secret")
+        response = self.client.get(
+            reverse("work_entry_update", args=[entry.id]),
+            {"next": "/work-entries/?year=2026&month=4"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"]["date"].value(), date(2026, 5, 8))
+        self.assertContains(response, 'type="date"', html=False)
+        self.assertContains(response, 'value="2026-05-08"', html=False)
+        self.assertContains(response, 'type="hidden" name="next" value="/work-entries/?year=2026&amp;month=4"', html=False)
+
     def test_work_entry_can_be_edited_by_owner(self):
         user = User.objects.create_user(username="hana", password="secret")
         workspace = Workspace.objects.create(name="Hana")
@@ -421,6 +526,39 @@ class WorkEntryReportTests(TestCase):
         self.assertEqual(entry.end_time, time(11, 30))
         self.assertEqual(entry.note, "fixed")
 
+    def test_work_entry_edit_redirects_back_to_filtered_report(self):
+        user = User.objects.create_user(username="hananext", password="secret")
+        workspace = Workspace.objects.create(name="Hana next")
+        WorkspaceMembership.objects.create(workspace=workspace, user=user)
+        client = Client.objects.create(workspace=workspace, name="Client")
+        project = Project.objects.create(workspace=workspace, client=client, name="Project")
+        entry = WorkEntry.objects.create(
+            workspace=workspace,
+            user=user,
+            project=project,
+            date=date(2026, 5, 8),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            is_billable=True,
+        )
+
+        self.client.login(username="hananext", password="secret")
+        response = self.client.post(
+            reverse("work_entry_update", args=[entry.id]),
+            {
+                "date": "2026-05-08",
+                "project": str(project.id),
+                "start_time": "09:00",
+                "end_time": "11:30",
+                "is_billable": "on",
+                "note": "fixed",
+                "next": "/work-entries/?year=2026&month=4&client=12",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/work-entries/?year=2026&month=4&client=12")
+
     def test_work_entry_can_be_deleted_by_owner(self):
         user = User.objects.create_user(username="mazani", password="secret")
         workspace = Workspace.objects.create(name="Mazání")
@@ -441,6 +579,32 @@ class WorkEntryReportTests(TestCase):
         response = self.client.post(reverse("work_entry_delete", args=[entry.id]))
 
         self.assertEqual(response.status_code, 302)
+        self.assertFalse(WorkEntry.objects.filter(id=entry.id).exists())
+
+    def test_work_entry_delete_redirects_back_to_filtered_report(self):
+        user = User.objects.create_user(username="mazaninext", password="secret")
+        workspace = Workspace.objects.create(name="Mazání next")
+        WorkspaceMembership.objects.create(workspace=workspace, user=user)
+        client = Client.objects.create(workspace=workspace, name="Klient")
+        project = Project.objects.create(workspace=workspace, client=client, name="Projekt")
+        entry = WorkEntry.objects.create(
+            workspace=workspace,
+            user=user,
+            project=project,
+            date=date(2026, 4, 1),
+            start_time=time(9, 0),
+            end_time=time(10, 0),
+            is_billable=True,
+        )
+
+        self.client.login(username="mazaninext", password="secret")
+        response = self.client.post(
+            reverse("work_entry_delete", args=[entry.id]),
+            {"next": "/work-entries/?year=2026&month=4&client=7"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/work-entries/?year=2026&month=4&client=7")
         self.assertFalse(WorkEntry.objects.filter(id=entry.id).exists())
 
 

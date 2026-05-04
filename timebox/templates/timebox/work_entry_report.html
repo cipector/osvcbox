@@ -33,6 +33,7 @@
     </p>
     <button type="submit">Filtrovat</button>
     <a class="button" href="?{{ export_query }}">Export XLSX</a>
+    <a class="button" href="?{{ english_export_query }}">Export XLSX (EN)</a>
 </form>
 
 <section class="grid">
@@ -42,49 +43,161 @@
 </section>
 
 {% if entries %}
-    <table>
-        <thead>
-            <tr>
-                <th>Datum</th>
-                <th>Klient</th>
-                <th>Projekt</th>
-                <th>Čas</th>
-                <th>Oběd</th>
-                <th>Fakturovatelné</th>
-                <th>Hodiny</th>
-                <th>Sazba</th>
-                <th>Částka</th>
-                <th>Poznámka</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for entry in entries %}
+    <div class="column-toggles" data-column-toggles>
+        <strong>Sloupce:</strong>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="date" checked> Datum</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="client" checked> Klient</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="project" checked> Projekt</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="time" checked> Čas</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="lunch" checked> Oběd</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="hours" checked> Hodiny</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="rate" checked> Sazba</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="note" checked> Poznámka</label>
+    </div>
+    <div class="table-wrap report-table" data-report-table data-storage-scope="{{ user.id }}">
+        <table>
+            <colgroup>
+                <col class="col-date" data-column="date">
+                <col class="col-client" data-column="client">
+                <col class="col-project" data-column="project">
+                <col class="col-time" data-column="time">
+                <col class="col-lunch" data-column="lunch">
+                <col class="col-hours" data-column="hours">
+                <col class="col-rate" data-column="rate">
+                <col class="col-note" data-column="note">
+                <col class="col-actions">
+            </colgroup>
+            <thead>
                 <tr>
-                    <td>{{ entry.date }}</td>
-                    <td>{{ entry.project.client.name }}</td>
-                    <td>{{ entry.project.name }}</td>
-                    <td>{{ entry.start_time|time:"H:i" }}-{{ entry.end_time|time:"H:i" }}</td>
-                    <td>{{ entry.deduct_lunch_break|yesno:"ano,ne" }}</td>
-                    <td>{{ entry.is_billable|yesno:"ano,ne" }}</td>
-                    <td>{{ entry.duration_hours }} h</td>
-                    <td>{{ entry.hourly_rate_czk }} Kč</td>
-                    <td>{{ entry.invoice_amount_czk }} Kč</td>
-                    <td>{{ entry.note }}</td>
-                    <td>
-                        <div class="row-actions">
-                            <a class="button icon-button" href="{% url 'work_entry_update' entry.id %}" title="Upravit" aria-label="Upravit">✎</a>
-                            <form method="post" action="{% url 'work_entry_delete' entry.id %}">
-                                {% csrf_token %}
-                                <button class="icon-button danger-button" type="submit" title="Smazat" aria-label="Smazat">×</button>
-                            </form>
-                        </div>
-                    </td>
+                    <th data-column="date"><span class="th-content">Datum</span><span class="column-resizer" data-column-resizer="date" aria-hidden="true"></span></th>
+                    <th data-column="client"><span class="th-content">Klient</span><span class="column-resizer" data-column-resizer="client" aria-hidden="true"></span></th>
+                    <th data-column="project"><span class="th-content">Projekt</span><span class="column-resizer" data-column-resizer="project" aria-hidden="true"></span></th>
+                    <th data-column="time"><span class="th-content">Čas</span><span class="column-resizer" data-column-resizer="time" aria-hidden="true"></span></th>
+                    <th data-column="lunch"><span class="th-content">Oběd</span><span class="column-resizer" data-column-resizer="lunch" aria-hidden="true"></span></th>
+                    <th data-column="hours"><span class="th-content">Hodiny</span><span class="column-resizer" data-column-resizer="hours" aria-hidden="true"></span></th>
+                    <th data-column="rate"><span class="th-content">Sazba</span><span class="column-resizer" data-column-resizer="rate" aria-hidden="true"></span></th>
+                    <th class="note-column" data-column="note"><span class="th-content">Poznámka</span><span class="column-resizer" data-column-resizer="note" aria-hidden="true"></span></th>
+                    <th class="actions-column"><span class="th-content">Akce</span></th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                    <tr>
+                        <td data-column="date">{{ entry.date|date:"j. n. Y" }}</td>
+                        <td data-column="client">{{ entry.project.client.name }}</td>
+                        <td data-column="project">{{ entry.project.name }}</td>
+                        <td data-column="time">{{ entry.start_time|time:"H:i" }}-{{ entry.end_time|time:"H:i" }}</td>
+                        <td data-column="lunch">{{ entry.deduct_lunch_break|yesno:"ano,ne" }}</td>
+                        <td data-column="hours">{{ entry.duration_hours }} h</td>
+                        <td data-column="rate">{{ entry.hourly_rate_czk }} Kč</td>
+                        <td class="note-column" data-column="note">{{ entry.note }}</td>
+                        <td class="actions-column">
+                            <div class="row-actions">
+                                <a class="button icon-button" href="{% url 'work_entry_update' entry.id %}?next={{ current_report_path|urlencode }}" title="Upravit" aria-label="Upravit">✎</a>
+                                <form method="post" action="{% url 'work_entry_delete' entry.id %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ current_report_path }}">
+                                    <button class="icon-button danger-button" type="submit" title="Smazat" aria-label="Smazat">×</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
     <p class="muted">Pro vybrané filtry nejsou žádné záznamy.</p>
 {% endif %}
+
+<script>
+    (function () {
+        var table = document.querySelector("[data-report-table]");
+        var toggles = document.querySelectorAll("[data-column-toggle]");
+        var resizers = document.querySelectorAll("[data-column-resizer]");
+        if (!table || !resizers.length) {
+            return;
+        }
+
+        var storageScope = table.dataset.storageScope || "anonymous";
+        var storageKey = "osvcbox-report-settings-" + storageScope;
+        var saved = { widths: {}, visibility: {} };
+        try {
+            var parsed = JSON.parse(localStorage.getItem(storageKey) || "{}");
+            saved.widths = parsed.widths || {};
+            saved.visibility = parsed.visibility || {};
+        } catch (error) {
+            saved = { widths: {}, visibility: {} };
+        }
+
+        var persist = function () {
+            localStorage.setItem(storageKey, JSON.stringify(saved));
+        };
+
+        var setColumnVisibility = function (column, visible) {
+            table.querySelectorAll('[data-column="' + column + '"]').forEach(function (element) {
+                element.classList.toggle("is-hidden", !visible);
+            });
+            saved.visibility[column] = visible;
+        };
+
+        Object.keys(saved.widths).forEach(function (column) {
+            var width = parseInt(saved.widths[column], 10);
+            if (width) {
+                table.style.setProperty("--col-" + column, width + "px");
+            }
+        });
+
+        toggles.forEach(function (toggle) {
+            var column = toggle.dataset.columnToggle;
+            var visible = saved.visibility[column];
+            if (visible === undefined) {
+                visible = true;
+            }
+            toggle.checked = visible;
+            setColumnVisibility(column, visible);
+            toggle.addEventListener("change", function () {
+                setColumnVisibility(column, toggle.checked);
+                persist();
+            });
+        });
+
+        resizers.forEach(function (handle) {
+            handle.addEventListener("pointerdown", function (event) {
+                var column = handle.dataset.columnResizer;
+                var startX = event.clientX;
+                var startWidth = parseInt(getComputedStyle(table).getPropertyValue("--col-" + column), 10);
+                if (!startWidth) {
+                    return;
+                }
+
+                handle.classList.add("is-active");
+                document.body.style.cursor = "col-resize";
+                document.body.style.userSelect = "none";
+                handle.setPointerCapture(event.pointerId);
+
+                var onMove = function (moveEvent) {
+                    var nextWidth = Math.max(70, startWidth + (moveEvent.clientX - startX));
+                    table.style.setProperty("--col-" + column, nextWidth + "px");
+                    saved.widths[column] = nextWidth;
+                };
+
+                var onUp = function (upEvent) {
+                    persist();
+                    handle.classList.remove("is-active");
+                    document.body.style.cursor = "";
+                    document.body.style.userSelect = "";
+                    handle.releasePointerCapture(upEvent.pointerId);
+                    handle.removeEventListener("pointermove", onMove);
+                    handle.removeEventListener("pointerup", onUp);
+                    handle.removeEventListener("pointercancel", onUp);
+                };
+
+                handle.addEventListener("pointermove", onMove);
+                handle.addEventListener("pointerup", onUp);
+                handle.addEventListener("pointercancel", onUp);
+            });
+        });
+    })();
+</script>
 {% endblock %}

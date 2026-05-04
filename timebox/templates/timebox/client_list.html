@@ -4,14 +4,16 @@
 <h1>Klienti</h1>
 <p class="actions"><a class="button" href="{% url 'client_create' %}">Nový klient</a></p>
 {% if clients %}
-    <table>
-        <thead><tr><th>Název</th><th>Výchozí sazba</th></tr></thead>
-        <tbody>
-            {% for client in clients %}
-                <tr><td>{{ client.name }}</td><td>{{ client.default_hourly_rate_czk|default:"-" }}</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Název</th><th>Výchozí sazba</th></tr></thead>
+            <tbody>
+                {% for client in clients %}
+                    <tr><td>{{ client.name }}</td><td>{{ client.default_hourly_rate_czk|default:"-" }}</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% else %}
     <p class="muted">Zatím nemáte žádné klienty.</p>
 {% endif %}
