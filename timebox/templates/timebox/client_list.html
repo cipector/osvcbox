@@ -1,12 +1,12 @@
 {% extends "timebox/base.html" %}
 
 {% block content %}
-<h1>Klienti</h1>
-<p class="actions"><a class="button" href="{% url 'client_create' %}">Nový klient</a></p>
+<h1>{{ ui.client_list.title }}</h1>
+<p class="actions"><a class="button" href="{% url 'client_create' %}">{{ ui.client_list.create }}</a></p>
 {% if clients %}
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Název</th><th>Výchozí sazba</th></tr></thead>
+            <thead><tr><th>{{ ui.client_list.name }}</th><th>{{ ui.client_list.rate }}</th></tr></thead>
             <tbody>
                 {% for client in clients %}
                     <tr><td>{{ client.name }}</td><td>{{ client.default_hourly_rate_czk|default:"-" }}</td></tr>
@@ -15,6 +15,6 @@
         </table>
     </div>
 {% else %}
-    <p class="muted">Zatím nemáte žádné klienty.</p>
+    <p class="muted">{{ ui.client_list.empty }}</p>
 {% endif %}
 {% endblock %}

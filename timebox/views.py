@@ -12,6 +12,7 @@ from django.utils.text import slugify
 
 from .forms import ClientForm, ProjectForm, RegularPaymentForm, WorkEntryForm, WorkspaceSettingsForm
 from .exports import build_work_entries_xlsx
+from .i18n import DEFAULT_LANGUAGE, LANGUAGE_SESSION_KEY, SUPPORTED_LANGUAGES, current_language, t
 from .holidays import czech_public_holidays_map
 from .models import Client, Project, RegularPayment, WorkEntry, Workspace, WorkspaceMembership
 from .payments import regular_payment_qr_data_uri
@@ -31,6 +32,18 @@ def get_current_workspace(user: User):
     workspace = Workspace.objects.create(name=f"Pracovní prostor {user.username}")
     WorkspaceMembership.objects.create(workspace=workspace, user=user)
     return workspace
+
+
+def set_language(request):
+    language = request.POST.get("language", DEFAULT_LANGUAGE)
+    if language not in SUPPORTED_LANGUAGES:
+        language = DEFAULT_LANGUAGE
+    request.session[LANGUAGE_SESSION_KEY] = language
+    request.LANGUAGE_CODE = language
+    next_url = request.POST.get("next") or request.META.get("HTTP_REFERER") or reverse("dashboard")
+    if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+        next_url = reverse("dashboard")
+    return redirect(next_url)
 
 
 @login_required
@@ -56,6 +69,8 @@ def dashboard(request):
             "period": period,
             "year": year,
             "month": month,
+            "title": t(current_language(request), "dashboard", "title"),
+            "holiday_subtitle": t(current_language(request), "dashboard", "holiday_subtitle", count=data.fund_holiday_count),
         },
     )
 
@@ -63,14 +78,15 @@ def dashboard(request):
 @login_required
 def workspace_settings(request):
     workspace = get_current_workspace(request.user)
+    language = current_language(request)
     if request.method == "POST":
-        form = WorkspaceSettingsForm(request.POST, instance=workspace)
+        form = WorkspaceSettingsForm(request.POST, instance=workspace, language=language)
         if form.is_valid():
             form.save()
             return redirect("dashboard")
     else:
-        form = WorkspaceSettingsForm(instance=workspace)
-    return render(request, "timebox/form.html", {"title": "Nastavení pracovního prostoru", "form": form})
+        form = WorkspaceSettingsForm(instance=workspace, language=language)
+    return render(request, "timebox/form.html", {"title": t(language, "forms", "workspace_settings"), "form": form})
 
 
 @login_required
@@ -83,16 +99,17 @@ def client_list(request):
 @login_required
 def client_create(request):
     workspace = get_current_workspace(request.user)
+    language = current_language(request)
     if request.method == "POST":
-        form = ClientForm(request.POST)
+        form = ClientForm(request.POST, language=language)
         if form.is_valid():
             client = form.save(commit=False)
             client.workspace = workspace
             client.save()
             return redirect("client_list")
     else:
-        form = ClientForm()
-    return render(request, "timebox/form.html", {"title": "Nový klient", "form": form})
+        form = ClientForm(language=language)
+    return render(request, "timebox/form.html", {"title": t(language, "forms", "client_create"), "form": form})
 
 
 @login_required
@@ -105,16 +122,17 @@ def project_list(request):
 @login_required
 def project_create(request):
     workspace = get_current_workspace(request.user)
+    language = current_language(request)
     if request.method == "POST":
-        form = ProjectForm(request.POST, workspace=workspace)
+        form = ProjectForm(request.POST, workspace=workspace, language=language)
         if form.is_valid():
             project = form.save(commit=False)
             project.workspace = workspace
             project.save()
             return redirect("project_list")
     else:
-        form = ProjectForm(workspace=workspace)
-    return render(request, "timebox/form.html", {"title": "Nový projekt", "form": form})
+        form = ProjectForm(workspace=workspace, language=language)
+    return render(request, "timebox/form.html", {"title": t(language, "forms", "project_create"), "form": form})
 
 
 @login_required
@@ -129,8 +147,9 @@ def regular_payment_list(request):
 @login_required
 def regular_payment_create(request):
     workspace = get_current_workspace(request.user)
+    language = current_language(request)
     if request.method == "POST":
-        form = RegularPaymentForm(request.POST)
+        form = RegularPaymentForm(request.POST, language=language)
         if form.is_valid():
             payment = form.save(commit=False)
             payment.workspace = workspace
@@ -138,30 +157,32 @@ def regular_payment_create(request):
             payment.save()
             return redirect("regular_payment_list")
     else:
-        form = RegularPaymentForm(initial={"is_active": True})
-    return render(request, "timebox/form.html", {"title": "Nová pravidelná platba", "form": form})
+        form = RegularPaymentForm(initial={"is_active": True}, language=language)
+    return render(request, "timebox/form.html", {"title": t(language, "forms", "regular_payment_create"), "form": form})
 
 
 @login_required
 def regular_payment_update(request, pk):
     workspace = get_current_workspace(request.user)
     payment = get_object_or_404(RegularPayment, pk=pk, workspace=workspace, user=request.user)
+    language = current_language(request)
     if request.method == "POST":
-        form = RegularPaymentForm(request.POST, instance=payment)
+        form = RegularPaymentForm(request.POST, instance=payment, language=language)
         if form.is_valid():
             form.save()
             return redirect("regular_payment_list")
     else:
-        form = RegularPaymentForm(instance=payment)
-    return render(request, "timebox/form.html", {"title": "Upravit pravidelnou platbu", "form": form})
+        form = RegularPaymentForm(instance=payment, language=language)
+    return render(request, "timebox/form.html", {"title": t(language, "forms", "regular_payment_update"), "form": form})
 
 
 @login_required
 def work_entry_create(request):
     workspace = get_current_workspace(request.user)
+    language = current_language(request)
     today = timezone.localdate()
     if request.method == "POST":
-        form = WorkEntryForm(request.POST, workspace=workspace)
+        form = WorkEntryForm(request.POST, workspace=workspace, language=language)
         if form.is_valid():
             entry = form.save(commit=False)
             entry.workspace = workspace
@@ -173,6 +194,7 @@ def work_entry_create(request):
         calendar_date = _calendar_date_from_request(request, today)
         form = WorkEntryForm(
             workspace=workspace,
+            language=language,
             initial={
                 "date": today,
                 "start_time": time(8, 0),
@@ -184,7 +206,7 @@ def work_entry_create(request):
     return render(
         request,
         "timebox/work_entry_form.html",
-        {"title": "Zapsat hodiny", "form": form, "calendar": _work_entry_calendar(calendar_date)},
+        {"title": t(language, "forms", "work_entry_create"), "form": form, "calendar": _work_entry_calendar(calendar_date)},
     )
 
 
@@ -193,20 +215,21 @@ def work_entry_update(request, pk):
     workspace = get_current_workspace(request.user)
     entry = get_object_or_404(WorkEntry, pk=pk, workspace=workspace, user=request.user)
     next_url = _next_url_from_request(request)
+    language = current_language(request)
     if request.method == "POST":
-        form = WorkEntryForm(request.POST, workspace=workspace, instance=entry)
+        form = WorkEntryForm(request.POST, workspace=workspace, instance=entry, language=language)
         if form.is_valid():
             form.save()
             return _redirect_to_next_or_report(next_url, entry.date.year, entry.date.month)
         calendar_date = _parse_date(request.POST.get("date"), entry.date)
     else:
-        form = WorkEntryForm(workspace=workspace, instance=entry)
+        form = WorkEntryForm(workspace=workspace, instance=entry, language=language)
         calendar_date = _calendar_date_from_request(request, entry.date)
     return render(
         request,
         "timebox/work_entry_form.html",
         {
-            "title": "Upravit hodiny",
+            "title": t(language, "forms", "work_entry_update"),
             "form": form,
             "calendar": _work_entry_calendar(calendar_date),
             "next_url": next_url,
@@ -230,6 +253,7 @@ def work_entry_delete(request, pk):
 @login_required
 def work_entry_report(request):
     workspace = get_current_workspace(request.user)
+    language = current_language(request)
     today = timezone.localdate()
     year = _parse_int(request.GET.get("year"), today.year)
     month = _parse_int(request.GET.get("month"), today.month)
@@ -278,6 +302,7 @@ def work_entry_report(request):
             "current_report_path": request.get_full_path(),
             "export_query": export_query.urlencode(),
             "english_export_query": english_export_query.urlencode(),
+            "language": language,
         },
     )
 

@@ -20,6 +20,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "timebox.middleware.SessionLanguageMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -39,6 +40,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "timebox.context_processors.ui",
             ],
         },
     }
@@ -61,9 +63,16 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 LANGUAGE_CODE = "cs"
+LANGUAGES = [
+    ("cs", "Čeština"),
+    ("en", "English"),
+]
 TIME_ZONE = "Europe/Prague"
 USE_I18N = True
 USE_TZ = True
+
+TIMEBOX_LANGUAGE_SESSION_KEY = "osvcbox_language"
+TIMEBOX_SUPPORTED_LANGUAGES = ["cs", "en"]
 
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

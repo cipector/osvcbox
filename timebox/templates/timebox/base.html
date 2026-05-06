@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="cs">
+<html lang="{{ current_language }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>osvcbox</title>
+    <title>{% if title %}{{ title }} · {% endif %}osvcbox</title>
     <style>
         :root {
             color-scheme: light;
@@ -39,6 +39,9 @@
         nav { display: flex; gap: 12px; flex-wrap: wrap; }
         nav a, .button { color: var(--link); text-decoration: none; font-weight: 600; }
         .topline { margin-left: auto; display: flex; gap: 12px; align-items: center; color: var(--muted); }
+        .language-switch { display: inline-flex; align-items: center; gap: 4px; padding: 4px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 8px; }
+        .language-switch button { width: 46px; height: 36px; padding: 0; background: transparent; color: var(--text); border: 0; border-radius: 6px; font-size: 13px; font-weight: 700; letter-spacing: 0; }
+        .language-switch button.is-active { background: var(--surface); box-shadow: inset 0 0 0 1px var(--border); }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 20px 0; }
         .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
         .metric { font-size: 28px; font-weight: 700; margin-top: 8px; }
@@ -115,20 +118,26 @@
         <strong>osvcbox</strong>
         {% if user.is_authenticated %}
             <nav>
-                <a href="{% url 'dashboard' %}">Přehled</a>
-                <a href="{% url 'client_list' %}">Klienti</a>
-                <a href="{% url 'project_list' %}">Projekty</a>
-                <a href="{% url 'work_entry_create' %}">Zapsat hodiny</a>
-                <a href="{% url 'work_entry_report' %}">Rozpis</a>
-                <a href="{% url 'regular_payment_list' %}">Platby</a>
-                <a href="{% url 'workspace_settings' %}">Pracovní prostor</a>
+                <a href="{% url 'dashboard' %}">{{ ui.nav.dashboard }}</a>
+                <a href="{% url 'client_list' %}">{{ ui.nav.clients }}</a>
+                <a href="{% url 'project_list' %}">{{ ui.nav.projects }}</a>
+                <a href="{% url 'work_entry_create' %}">{{ ui.nav.work_entry_create }}</a>
+                <a href="{% url 'work_entry_report' %}">{{ ui.nav.report }}</a>
+                <a href="{% url 'regular_payment_list' %}">{{ ui.nav.payments }}</a>
+                <a href="{% url 'workspace_settings' %}">{{ ui.nav.workspace }}</a>
             </nav>
             <div class="topline">
                 <span>{{ user.username }}</span>
-                <button class="theme-toggle" type="button" data-theme-toggle title="Přepnout světlý/tmavý režim" aria-label="Přepnout světlý/tmavý režim">◐</button>
+                <form class="language-switch" action="{% url 'set_language' %}" method="post" aria-label="{{ ui.common.language }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" name="language" value="cs" class="{% if current_language == 'cs' %}is-active{% endif %}">{{ ui.languages.cs }}</button>
+                    <button type="submit" name="language" value="en" class="{% if current_language == 'en' %}is-active{% endif %}">{{ ui.languages.en }}</button>
+                </form>
+                <button class="theme-toggle" type="button" data-theme-toggle title="{{ ui.common.theme_toggle }}" aria-label="{{ ui.common.theme_toggle }}">◐</button>
                 <form action="{% url 'logout' %}" method="post" style="padding: 0; border: 0; background: transparent;">
                     {% csrf_token %}
-                    <button type="submit">Odhlásit</button>
+                    <button type="submit">{{ ui.common.logout }}</button>
                 </form>
             </div>
         {% endif %}

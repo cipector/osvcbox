@@ -1,27 +1,27 @@
 {% extends "timebox/base.html" %}
 
 {% block content %}
-<h1>Pravidelné platby</h1>
+<h1>{{ ui.payment_list.title }}</h1>
 <p class="muted">{{ workspace.name }}</p>
-<p class="actions"><a class="button" href="{% url 'regular_payment_create' %}">Nová platba</a></p>
+<p class="actions"><a class="button" href="{% url 'regular_payment_create' %}">{{ ui.payment_list.create }}</a></p>
 
 {% if payments %}
     <section class="grid">
         {% for item in payments %}
             <article class="card">
                 <h2>{{ item.payment.name }}</h2>
-                <p><strong>{{ item.payment.amount_czk }} Kč</strong></p>
-                <p>Účet: {% if item.payment.account_prefix %}{{ item.payment.account_prefix }}-{% endif %}{{ item.payment.account_number }}/{{ item.payment.bank_code }}</p>
-                {% if item.payment.variable_symbol %}<p>VS: {{ item.payment.variable_symbol }}</p>{% endif %}
-                {% if item.payment.message %}<p>Zpráva: {{ item.payment.message }}</p>{% endif %}
-                <p>Připomenout: {{ item.payment.reminder_day }}. den v měsíci</p>
-                <p>Stav: {{ item.payment.is_active|yesno:"aktivní,neaktivní" }}</p>
-                <img src="{{ item.qr_data_uri }}" alt="QR kód pro platbu {{ item.payment.name }}" style="width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 6px;">
-                <p class="actions"><a class="button" href="{% url 'regular_payment_update' item.payment.id %}">Upravit</a></p>
+                <p><strong>{{ item.payment.amount_czk }} {{ ui.common.currency }}</strong></p>
+                <p>{{ ui.payment_list.account }}: {% if item.payment.account_prefix %}{{ item.payment.account_prefix }}-{% endif %}{{ item.payment.account_number }}/{{ item.payment.bank_code }}</p>
+                {% if item.payment.variable_symbol %}<p>{{ ui.payment_list.variable_symbol }}: {{ item.payment.variable_symbol }}</p>{% endif %}
+                {% if item.payment.message %}<p>{{ ui.payment_list.message }}: {{ item.payment.message }}</p>{% endif %}
+                <p>{{ ui.payment_list.reminder }}: {{ item.payment.reminder_day }}. {{ ui.payment_list.reminder_suffix }}</p>
+                <p>{{ ui.payment_list.status }}: {% if item.payment.is_active %}{{ ui.common.active }}{% else %}{{ ui.common.inactive }}{% endif %}</p>
+                <img src="{{ item.qr_data_uri }}" alt="{{ ui.payment_list.qr_alt }} {{ item.payment.name }}" style="width: 180px; height: 180px; background: #ffffff; padding: 8px; border-radius: 6px;">
+                <p class="actions"><a class="button" href="{% url 'regular_payment_update' item.payment.id %}">{{ ui.payment_list.edit }}</a></p>
             </article>
         {% endfor %}
     </section>
 {% else %}
-    <p class="muted">Zatím nemáte žádné pravidelné platby.</p>
+    <p class="muted">{{ ui.payment_list.empty }}</p>
 {% endif %}
 {% endblock %}

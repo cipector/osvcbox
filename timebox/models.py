@@ -5,6 +5,8 @@ from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
+from .i18n import current_language, t
+
 
 class Workspace(models.Model):
     name = models.CharField(max_length=120)
@@ -84,7 +86,7 @@ class Project(models.Model):
         if self.client_id and self.workspace_id and self.client.workspace_id != self.workspace_id:
             from django.core.exceptions import ValidationError
 
-            raise ValidationError({"client": "Klient musí patřit do aktuálního pracovního prostoru."})
+            raise ValidationError({"client": t(current_language(), "errors", "client_workspace")})
 
     def __str__(self):
         return f"{self.client.name} / {self.name}"
@@ -109,16 +111,16 @@ class WorkEntry(models.Model):
         from django.core.exceptions import ValidationError
 
         if self.project_id and self.workspace_id and self.project.workspace_id != self.workspace_id:
-            raise ValidationError({"project": "Projekt musí patřit do aktuálního pracovního prostoru."})
+            raise ValidationError({"project": t(current_language(), "errors", "project_workspace")})
 
         if self.start_time and self.end_time and self.end_time <= self.start_time:
-            raise ValidationError({"end_time": "Konec musí být později než začátek."})
+            raise ValidationError({"end_time": t(current_language(), "errors", "end_after_start")})
 
         if self.date and self.start_time and self.end_time and self.duration_hours <= Decimal("0.00"):
-            raise ValidationError({"deduct_lunch_break": "Po odečtení oběda musí být délka záznamu větší než 0 hodin."})
+            raise ValidationError({"deduct_lunch_break": t(current_language(), "errors", "positive_duration")})
 
         if self.date and self.start_time and self.end_time and self.duration_hours > Decimal("24.00"):
-            raise ValidationError({"end_time": "Záznam může mít maximálně 24 hodin."})
+            raise ValidationError({"end_time": t(current_language(), "errors", "max_24_hours")})
 
     @property
     def duration_hours(self):

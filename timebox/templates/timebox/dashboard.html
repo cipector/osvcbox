@@ -1,42 +1,42 @@
 {% extends "timebox/base.html" %}
 
 {% block content %}
-<h1>Přehled {{ dashboard.month_label }}</h1>
-<p class="muted">{{ workspace.name }} · pracovních dnů po odečtení českých svátků: {{ dashboard.working_days }}</p>
+<h1>{{ ui.dashboard.title }} {{ dashboard.month_label }}</h1>
+<p class="muted">{{ workspace.name }} · {{ dashboard.working_days }} {{ ui.dashboard.working_days }}</p>
 
 <form class="filter-form" method="get">
     <p>
-        <label for="period">Období</label>
+        <label for="period">{{ ui.dashboard.period }}</label>
         <select id="period" name="period">
-            <option value="month" {% if period == "month" %}selected{% endif %}>Měsíc</option>
-            <option value="year" {% if period == "year" %}selected{% endif %}>Rok</option>
+            <option value="month" {% if period == "month" %}selected{% endif %}>{{ ui.dashboard.month }}</option>
+            <option value="year" {% if period == "year" %}selected{% endif %}>{{ ui.dashboard.year }}</option>
         </select>
     </p>
     <p>
-        <label for="month">Měsíc</label>
+        <label for="month">{{ ui.dashboard.month }}</label>
         <input id="month" name="month" type="number" min="1" max="12" value="{{ month }}">
     </p>
     <p>
-        <label for="year">Rok</label>
+        <label for="year">{{ ui.dashboard.year }}</label>
         <input id="year" name="year" type="number" min="2000" max="2100" value="{{ year }}">
     </p>
-    <button type="submit">Zobrazit</button>
+    <button type="submit">{{ ui.dashboard.show }}</button>
 </form>
 
 <section class="grid">
-    <div class="card"><div>Pracovní fond</div><div class="metric">{{ dashboard.work_fund_hours }} h</div></div>
-    <div class="card"><div>Odpracováno celkem</div><div class="metric">{{ dashboard.worked_hours }} h</div></div>
-    <div class="card"><div>Fakturovatelné</div><div class="metric">{{ dashboard.billable_hours }} h</div></div>
-    <div class="card"><div>Nefakturovatelné</div><div class="metric">{{ dashboard.non_billable_hours }} h</div></div>
-    <div class="card"><div>Saldo hodin</div><div class="metric">{{ dashboard.balance_hours }} h</div></div>
-    <div class="card"><div>K fakturaci celkem</div><div class="metric">{{ dashboard.invoice_amount_czk|floatformat:2 }}&nbsp;Kč</div></div>
-    <div class="card"><div>Pravidelné platby</div><div class="metric">{{ dashboard.regular_expenses_czk|floatformat:2 }}&nbsp;Kč</div></div>
-    <div class="card"><div>Čistá částka</div><div class="metric">{{ dashboard.net_invoice_amount_czk|floatformat:2 }}&nbsp;Kč</div></div>
+    <div class="card"><div>{{ ui.dashboard.work_fund }}</div><div class="metric">{{ dashboard.work_fund_hours }} h</div></div>
+    <div class="card"><div>{{ ui.dashboard.worked_total }}</div><div class="metric">{{ dashboard.worked_hours }} h</div></div>
+    <div class="card"><div>{{ ui.dashboard.billable }}</div><div class="metric">{{ dashboard.billable_hours }} h</div></div>
+    <div class="card"><div>{{ ui.dashboard.non_billable }}</div><div class="metric">{{ dashboard.non_billable_hours }} h</div></div>
+    <div class="card"><div>{{ ui.dashboard.balance }}</div><div class="metric">{{ dashboard.balance_hours }} h</div></div>
+    <div class="card"><div>{{ ui.dashboard.invoice_total }}</div><div class="metric">{{ dashboard.invoice_amount_czk|floatformat:2 }}&nbsp;{{ ui.common.currency }}</div></div>
+    <div class="card"><div>{{ ui.dashboard.regular_expenses }}</div><div class="metric">{{ dashboard.regular_expenses_czk|floatformat:2 }}&nbsp;{{ ui.common.currency }}</div></div>
+    <div class="card"><div>{{ ui.dashboard.net_total }}</div><div class="metric">{{ dashboard.net_invoice_amount_czk|floatformat:2 }}&nbsp;{{ ui.common.currency }}</div></div>
 </section>
 
 <section class="holiday-list">
-    <strong>Svátky ve vybraném období: {{ dashboard.holiday_count }}</strong>
-    <p class="muted">Fond snižuje {{ dashboard.fund_holiday_count }} svátků, které vycházejí na pracovní den.</p>
+    <strong>{{ ui.dashboard.holiday_heading }}: {{ dashboard.holiday_count }}</strong>
+    <p class="muted">{{ holiday_subtitle }}</p>
     {% if dashboard.holidays %}
         <ul>
             {% for holiday, name in dashboard.holidays %}
@@ -44,19 +44,19 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p class="muted">V tomto období nejsou žádné české státní svátky.</p>
+        <p class="muted">{{ ui.dashboard.holiday_empty }}</p>
     {% endif %}
 </section>
 
-<h2>Rozpad k fakturaci</h2>
+<h2>{{ ui.dashboard.billing_breakdown }}</h2>
 {% if dashboard.clients %}
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>Zákazník / projekt</th>
-                    <th>Fakturovatelné hodiny</th>
-                    <th>Částka</th>
+                    <th>{{ ui.dashboard.customer_project }}</th>
+                    <th>{{ ui.dashboard.billable_hours }}</th>
+                    <th>{{ ui.dashboard.amount }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -64,13 +64,13 @@
                     <tr>
                         <th>{{ client.client_name }}</th>
                         <th>{{ client.billable_hours }} h</th>
-                        <th>{{ client.amount_czk|floatformat:2 }} Kč</th>
+                        <th>{{ client.amount_czk|floatformat:2 }} {{ ui.common.currency }}</th>
                     </tr>
                     {% for project in client.projects %}
                         <tr>
                             <td>{{ project.project_name }}</td>
                             <td>{{ project.billable_hours }} h</td>
-                            <td>{{ project.amount_czk|floatformat:2 }} Kč</td>
+                            <td>{{ project.amount_czk|floatformat:2 }} {{ ui.common.currency }}</td>
                         </tr>
                     {% endfor %}
                 {% endfor %}
@@ -78,6 +78,6 @@
         </table>
     </div>
 {% else %}
-    <p class="muted">Zatím nejsou žádné fakturovatelné záznamy pro vybrané období.</p>
+    <p class="muted">{{ ui.dashboard.empty }}</p>
 {% endif %}
 {% endblock %}

@@ -1,58 +1,58 @@
 {% extends "timebox/base.html" %}
 
 {% block content %}
-<h1>Rozpis hodin {{ month }}/{{ year }}</h1>
+<h1>{{ ui.work_entry_report.title }} {{ month }}/{{ year }}</h1>
 <p class="muted">{{ workspace.name }}</p>
 
 <form class="filter-form" method="get">
     <p>
-        <label for="year">Rok</label>
+        <label for="year">{{ ui.work_entry_report.year }}</label>
         <input id="year" name="year" type="number" min="2000" max="2100" value="{{ year }}">
     </p>
     <p>
-        <label for="month">Měsíc</label>
+        <label for="month">{{ ui.work_entry_report.month }}</label>
         <input id="month" name="month" type="number" min="1" max="12" value="{{ month }}">
     </p>
     <p>
-        <label for="client">Klient</label>
+        <label for="client">{{ ui.work_entry_report.client }}</label>
         <select id="client" name="client">
-            <option value="">Vše</option>
+            <option value="">{{ ui.work_entry_report.all }}</option>
             {% for client in clients %}
                 <option value="{{ client.id }}" {% if client.id == selected_client_id %}selected{% endif %}>{{ client.name }}</option>
             {% endfor %}
         </select>
     </p>
     <p>
-        <label for="project">Projekt</label>
+        <label for="project">{{ ui.work_entry_report.project }}</label>
         <select id="project" name="project">
-            <option value="">Vše</option>
+            <option value="">{{ ui.work_entry_report.all }}</option>
             {% for project in projects %}
                 <option value="{{ project.id }}" {% if project.id == selected_project_id %}selected{% endif %}>{{ project.client.name }} / {{ project.name }}</option>
             {% endfor %}
         </select>
     </p>
-    <button type="submit">Filtrovat</button>
-    <a class="button" href="?{{ export_query }}">Export XLSX</a>
-    <a class="button" href="?{{ english_export_query }}">Export XLSX (EN)</a>
+    <button type="submit">{{ ui.work_entry_report.filter }}</button>
+    <a class="button" href="?{{ export_query }}">{{ ui.work_entry_report.export }}</a>
+    <a class="button" href="?{{ english_export_query }}">{{ ui.work_entry_report.export_en }}</a>
 </form>
 
 <section class="grid">
-    <div class="card"><div>Odpracováno</div><div class="metric">{{ totals.worked_hours }} h</div></div>
-    <div class="card"><div>Fakturovatelné</div><div class="metric">{{ totals.billable_hours }} h</div></div>
-    <div class="card"><div>Částka</div><div class="metric">{{ totals.amount_czk }} Kč</div></div>
+    <div class="card"><div>{{ ui.work_entry_report.worked }}</div><div class="metric">{{ totals.worked_hours }} h</div></div>
+    <div class="card"><div>{{ ui.work_entry_report.billable }}</div><div class="metric">{{ totals.billable_hours }} h</div></div>
+    <div class="card"><div>{{ ui.work_entry_report.amount }}</div><div class="metric">{{ totals.amount_czk|floatformat:2 }} {{ ui.common.currency }}</div></div>
 </section>
 
 {% if entries %}
     <div class="column-toggles" data-column-toggles>
-        <strong>Sloupce:</strong>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="date" checked> Datum</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="client" checked> Klient</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="project" checked> Projekt</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="time" checked> Čas</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="lunch" checked> Oběd</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="hours" checked> Hodiny</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="rate" checked> Sazba</label>
-        <label class="column-toggle"><input type="checkbox" data-column-toggle="note" checked> Poznámka</label>
+        <strong>{{ ui.work_entry_report.columns }}:</strong>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="date" checked> {{ ui.work_entry_report.date }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="client" checked> {{ ui.work_entry_report.client }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="project" checked> {{ ui.work_entry_report.project }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="time" checked> {{ ui.work_entry_report.time }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="lunch" checked> {{ ui.work_entry_report.lunch }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="hours" checked> {{ ui.work_entry_report.hours }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="rate" checked> {{ ui.work_entry_report.rate }}</label>
+        <label class="column-toggle"><input type="checkbox" data-column-toggle="note" checked> {{ ui.work_entry_report.note }}</label>
     </div>
     <div class="table-wrap report-table" data-report-table data-storage-scope="{{ user.id }}">
         <table>
@@ -69,15 +69,15 @@
             </colgroup>
             <thead>
                 <tr>
-                    <th data-column="date"><span class="th-content">Datum</span><span class="column-resizer" data-column-resizer="date" aria-hidden="true"></span></th>
-                    <th data-column="client"><span class="th-content">Klient</span><span class="column-resizer" data-column-resizer="client" aria-hidden="true"></span></th>
-                    <th data-column="project"><span class="th-content">Projekt</span><span class="column-resizer" data-column-resizer="project" aria-hidden="true"></span></th>
-                    <th data-column="time"><span class="th-content">Čas</span><span class="column-resizer" data-column-resizer="time" aria-hidden="true"></span></th>
-                    <th data-column="lunch"><span class="th-content">Oběd</span><span class="column-resizer" data-column-resizer="lunch" aria-hidden="true"></span></th>
-                    <th data-column="hours"><span class="th-content">Hodiny</span><span class="column-resizer" data-column-resizer="hours" aria-hidden="true"></span></th>
-                    <th data-column="rate"><span class="th-content">Sazba</span><span class="column-resizer" data-column-resizer="rate" aria-hidden="true"></span></th>
-                    <th class="note-column" data-column="note"><span class="th-content">Poznámka</span><span class="column-resizer" data-column-resizer="note" aria-hidden="true"></span></th>
-                    <th class="actions-column"><span class="th-content">Akce</span></th>
+                    <th data-column="date"><span class="th-content">{{ ui.work_entry_report.date }}</span><span class="column-resizer" data-column-resizer="date" aria-hidden="true"></span></th>
+                    <th data-column="client"><span class="th-content">{{ ui.work_entry_report.client }}</span><span class="column-resizer" data-column-resizer="client" aria-hidden="true"></span></th>
+                    <th data-column="project"><span class="th-content">{{ ui.work_entry_report.project }}</span><span class="column-resizer" data-column-resizer="project" aria-hidden="true"></span></th>
+                    <th data-column="time"><span class="th-content">{{ ui.work_entry_report.time }}</span><span class="column-resizer" data-column-resizer="time" aria-hidden="true"></span></th>
+                    <th data-column="lunch"><span class="th-content">{{ ui.work_entry_report.lunch }}</span><span class="column-resizer" data-column-resizer="lunch" aria-hidden="true"></span></th>
+                    <th data-column="hours"><span class="th-content">{{ ui.work_entry_report.hours }}</span><span class="column-resizer" data-column-resizer="hours" aria-hidden="true"></span></th>
+                    <th data-column="rate"><span class="th-content">{{ ui.work_entry_report.rate }}</span><span class="column-resizer" data-column-resizer="rate" aria-hidden="true"></span></th>
+                    <th class="note-column" data-column="note"><span class="th-content">{{ ui.work_entry_report.note }}</span><span class="column-resizer" data-column-resizer="note" aria-hidden="true"></span></th>
+                    <th class="actions-column"><span class="th-content">{{ ui.work_entry_report.actions }}</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -87,17 +87,17 @@
                         <td data-column="client">{{ entry.project.client.name }}</td>
                         <td data-column="project">{{ entry.project.name }}</td>
                         <td data-column="time">{{ entry.start_time|time:"H:i" }}-{{ entry.end_time|time:"H:i" }}</td>
-                        <td data-column="lunch">{{ entry.deduct_lunch_break|yesno:"ano,ne" }}</td>
+                        <td data-column="lunch">{% if entry.deduct_lunch_break %}{{ ui.common.yes }}{% else %}{{ ui.common.no }}{% endif %}</td>
                         <td data-column="hours">{{ entry.duration_hours }} h</td>
-                        <td data-column="rate">{{ entry.hourly_rate_czk }} Kč</td>
+                        <td data-column="rate">{{ entry.hourly_rate_czk }} {{ ui.common.currency }}</td>
                         <td class="note-column" data-column="note">{{ entry.note }}</td>
                         <td class="actions-column">
                             <div class="row-actions">
-                                <a class="button icon-button" href="{% url 'work_entry_update' entry.id %}?next={{ current_report_path|urlencode }}" title="Upravit" aria-label="Upravit">✎</a>
+                                <a class="button icon-button" href="{% url 'work_entry_update' entry.id %}?next={{ current_report_path|urlencode }}" title="{{ ui.common.edit }}" aria-label="{{ ui.common.edit }}">✎</a>
                                 <form method="post" action="{% url 'work_entry_delete' entry.id %}">
                                     {% csrf_token %}
                                     <input type="hidden" name="next" value="{{ current_report_path }}">
-                                    <button class="icon-button danger-button" type="submit" title="Smazat" aria-label="Smazat">×</button>
+                                    <button class="icon-button danger-button" type="submit" title="{{ ui.common.delete }}" aria-label="{{ ui.common.delete }}">×</button>
                                 </form>
                             </div>
                         </td>
@@ -107,7 +107,7 @@
         </table>
     </div>
 {% else %}
-    <p class="muted">Pro vybrané filtry nejsou žádné záznamy.</p>
+    <p class="muted">{{ ui.work_entry_report.empty }}</p>
 {% endif %}
 
 <script>

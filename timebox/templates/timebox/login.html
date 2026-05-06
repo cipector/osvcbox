@@ -1,10 +1,10 @@
 {% extends "timebox/base.html" %}
 
 {% block content %}
-<h1>Přihlášení</h1>
+<h1>{{ ui.login.title }}</h1>
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit">Přihlásit</button>
+    <button type="submit">{{ ui.login.submit }}</button>
 </form>
 {% endblock %}
